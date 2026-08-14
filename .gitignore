@@ -1,0 +1,30 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+build/
+dist/
+.venv/
+venv/
+.env
+.idea/
+.vscode/
+
+# 環境変数・機密情報
+.env.*
+!.env.example
+
+
+# カバレッジ
+coverage.xml
+
+# 型チェック
+.pyright/
+
+# OS生成ファイル
+.DS_Store
+Thumbs.db
