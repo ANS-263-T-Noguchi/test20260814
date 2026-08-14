@@ -29,9 +29,7 @@ def load_estimate_rules(config_path: str | Path = DEFAULT_RULES_PATH) -> Estimat
     except FileNotFoundError:
         raise FileNotFoundError(f"見積判定設定ファイルが見つかりません: {path}") from None
     except (KeyError, TypeError):
-        raise ValueError(
-            "設定ファイルにquality_test.minimum_amountを指定してください"
-        ) from None
+        raise ValueError("設定ファイルにquality_test.minimum_amountを指定してください") from None
 
     if isinstance(minimum_amount, bool) or not isinstance(minimum_amount, (int, str)):
         raise ValueError("quality_test.minimum_amountは円単位の整数で指定してください")
@@ -60,4 +58,3 @@ def requires_quality_test(
 
     active_rules = rules if rules is not None else load_estimate_rules(config_path)
     return estimate_amount.amount >= active_rules.quality_test_minimum_amount.amount
-

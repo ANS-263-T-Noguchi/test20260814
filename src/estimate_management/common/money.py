@@ -55,4 +55,3 @@ class Money:
         if rate < 0:
             raise ValueError("税率は0以上で指定してください")
         return type(self)(self.amount * rate, rounding_policy)
-

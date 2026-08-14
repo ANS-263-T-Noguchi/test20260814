@@ -27,4 +27,3 @@ class EstimateNumber:
         if not 1 <= sequence <= 9999:
             raise ValueError("連番は1から9999の範囲で指定してください")
         return cls(f"EST-{issued_on:%Y%m%d}-{sequence:04d}")
-

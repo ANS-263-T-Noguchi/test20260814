@@ -20,4 +20,3 @@ def test_rejects_out_of_range_sequence(sequence: int) -> None:
 def test_rejects_invalid_format() -> None:
     with pytest.raises(ValueError, match="EST-YYYYMMDD-NNNN"):
         EstimateNumber("invalid")
-

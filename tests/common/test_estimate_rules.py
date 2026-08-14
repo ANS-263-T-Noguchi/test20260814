@@ -49,4 +49,3 @@ def test_rejects_config_without_quality_test_threshold(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="quality_test.minimum_amount"):
         load_estimate_rules(config_path)
-

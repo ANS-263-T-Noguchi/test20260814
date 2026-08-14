@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Decimal, ROUND_DOWN, ROUND_HALF_UP, ROUND_UP
-from enum import Enum
+from decimal import ROUND_DOWN, ROUND_HALF_UP, ROUND_UP, Decimal
+from enum import StrEnum
 
 
-class RoundingMode(str, Enum):
-    """見積計算で利用できる端数処理方式。"""
-
+class RoundingMode(StrEnum):
     DOWN = "down"
     UP = "up"
     HALF_UP = "half_up"
@@ -45,4 +43,3 @@ class RoundingPolicy:
 
 
 DEFAULT_ROUNDING_POLICY = RoundingPolicy()
-

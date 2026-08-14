@@ -53,8 +53,8 @@ tax = amount.calculate_tax(Decimal("0.10"), policy)
 ```python
 from estimate_management.common import Money, requires_quality_test
 
-requires_quality_test(Money.yen(999_999))   # False
-requires_quality_test(Money.yen(1_000_000)) # True
+requires_quality_test(Money.yen(999_999))  # False
+requires_quality_test(Money.yen(1_000_000))  # True
 ```
 
 複数の見積りをまとめて判定する場合は、`load_estimate_rules()`で設定を一度だけ
