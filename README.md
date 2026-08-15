@@ -47,18 +47,57 @@ tax = amount.calculate_tax(Decimal("0.10"), policy)
 
 ## 品管テスト判定
 
-`config/estimate_rules.toml`の`quality_test.minimum_amount`以上の見積金額は、
-品管テストが必要と判定されます。初期値は1,000,000円です。
+品管テストは、次のいずれかを満たす場合に必要と判定されます。
+
+- 見積金額が`quality_test.minimum_amount`以上
+- 値引率が`quality_test.minimum_discount`以上
+
+初期設定は、見積金額1,000,000円、または値引率20%以上です。
+
+```toml
+[quality_test]
+minimum_amount = 1000000
+minimum_discount = 20
+```
+
+値引率には0以上100以下の整数を指定します。
 
 ```python
-from estimate_management.common import Money, requires_quality_test
+from estimate_management.common import Discount, Money, requires_quality_test
 
-requires_quality_test(Money.yen(999_999))  # False
-requires_quality_test(Money.yen(1_000_000))  # True
+requires_quality_test(Money.yen(999_999), discount=Discount.discount(19))  # False
+requires_quality_test(Money.yen(999_999), discount=Discount.discount(20))  # True
+requires_quality_test(Money.yen(1_000_000), discount=Discount.discount(0))  # True
 ```
 
 複数の見積りをまとめて判定する場合は、`load_estimate_rules()`で設定を一度だけ
 読み込み、`requires_quality_test()`の第2引数へ渡せます。
+
+```python
+from estimate_management.common import Discount, Money, load_estimate_rules
+from estimate_management.common import requires_quality_test
+
+rules = load_estimate_rules()
+
+requires_quality_test(
+    Money.yen(800_000),
+    rules,
+    discount=Discount.discount(10),
+)
+```
+
+## 値引額計算
+
+`Discount`は値引率を表し、見積金額から値引額を計算できます。
+
+```python
+from estimate_management.common import Discount, Money
+
+discount_rate = Discount.discount(20)
+discount_amount = discount_rate.calculate_discount(Money.yen(1_000))
+
+assert discount_amount == Money.yen(200)
+```
 
 ## ディレクトリ構成
 
@@ -68,6 +107,11 @@ requires_quality_test(Money.yen(1_000_000))  # True
 ├── config/estimate_rules.toml
 ├── src/estimate_management/
 │   └── common/
+│       ├── discount.py
+│       ├── estimate_number.py
+│       ├── estimate_rules.py
+│       ├── money.py
+│       └── rounding.py
 ├── tests/common/
 └── pyproject.toml
 ```
