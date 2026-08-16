@@ -2,21 +2,24 @@
 
 from __future__ import annotations
 
+import logging
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
 from estimate_management.common.discount import Discount
 from estimate_management.common.money import Money
+from estimate_management.common.quality_check_result import QualityCheckResult
 
 DEFAULT_RULES_PATH = Path(__file__).resolve().parents[3] / "config" / "estimate_rules.toml"
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True, slots=True)
 class EstimateRules:
     """設定ファイルから読み込んだ見積判定ルール。"""
 
-    quality_test_minimum_amount: Money
+    quality_test_minimum_amount: Money | None
     quality_test_minimum_discount: Discount
 
 
@@ -33,17 +36,17 @@ def load_estimate_rules(config_path: str | Path = DEFAULT_RULES_PATH) -> Estimat
     try:
         minimum_amount = config["quality_test"]["minimum_amount"]
     except (KeyError, TypeError):
-        raise ValueError("設定ファイルにquality_test.minimum_amountを指定してください") from None
+        threshold = None
+    else:
+        if isinstance(minimum_amount, bool) or not isinstance(minimum_amount, (int, str)):
+            raise ValueError("quality_test.minimum_amountは円単位の整数で指定してください")
 
-    if isinstance(minimum_amount, bool) or not isinstance(minimum_amount, (int, str)):
-        raise ValueError("quality_test.minimum_amountは円単位の整数で指定してください")
-
-    try:
-        threshold = Money.yen(minimum_amount)
-    except (ValueError, ArithmeticError):
-        raise ValueError(
-            "quality_test.minimum_amountは0以上の円単位の整数で指定してください"
-        ) from None
+        try:
+            threshold = Money.yen(minimum_amount)
+        except (ValueError, ArithmeticError):
+            raise ValueError(
+                "quality_test.minimum_amountは0以上の円単位の整数で指定してください"
+            ) from None
 
     """minimum_discountのチェック"""
     try:
@@ -72,20 +75,41 @@ def requires_quality_test(
     *,
     discount: Discount | None,
     config_path: str | Path = DEFAULT_RULES_PATH,
-) -> bool:
-    """見積金額または値引率が品管テストの対象ならTrueを返します。
+) -> QualityCheckResult:
+    """見積金額または値引率による品管テスト判定結果を返します。
 
     大量の見積りを判定する場合は、load_estimate_rulesで一度だけ読み込んだ
     rulesを渡すことで、設定ファイルの繰り返し読み込みを避けられます。
 
-    金額条件が成立せず、値引率が未設定の場合は判定不能としてValueErrorを送出します。
+    minimum_amountが未設定の場合は警告を記録し、品管テスト不要と判定します。
+    値引率が未設定の場合は警告を記録し、金額条件だけで判定します。
     """
 
     active_rules = rules if rules is not None else load_estimate_rules(config_path)
-    if estimate_amount.amount >= active_rules.quality_test_minimum_amount.amount:
-        return True
+    if active_rules.quality_test_minimum_amount is None:
+        warning = "quality_test.minimum_amountが未設定のため品管テスト対象外です"
+        logger.warning("%s", warning)
+        return QualityCheckResult(required=False, warnings=(warning,))
+
+    amount_requires_quality_test = (
+        estimate_amount.amount >= active_rules.quality_test_minimum_amount.amount
+    )
 
     if discount is None:
-        raise ValueError("値引率が未設定のため品管テスト対象を判定できません")
+        warning = (
+            "値引率が未設定です。金額条件による判定結果を採用します: "
+            f"estimate_amount={estimate_amount.amount}, "
+            f"requires_quality_test={amount_requires_quality_test}"
+        )
+        logger.warning("%s", warning)
+        return QualityCheckResult(
+            required=amount_requires_quality_test,
+            warnings=(warning,),
+        )
 
-    return discount.amount >= active_rules.quality_test_minimum_discount.amount
+    if amount_requires_quality_test:
+        return QualityCheckResult(required=True)
+
+    return QualityCheckResult(
+        required=discount.amount > active_rules.quality_test_minimum_discount.amount
+    )

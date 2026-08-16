@@ -8,6 +8,7 @@ from estimate_management.common.estimate_rules import (
     requires_quality_test,
 )
 from estimate_management.common.money import Money
+from estimate_management.common.quality_check_result import QualityCheckResult
 from estimate_management.common.rounding import RoundingMode, RoundingPolicy
 
 __all__ = [
@@ -15,6 +16,7 @@ __all__ = [
     "EstimateNumber",
     "EstimateRules",
     "Money",
+    "QualityCheckResult",
     "RoundingMode",
     "RoundingPolicy",
     "load_estimate_rules",

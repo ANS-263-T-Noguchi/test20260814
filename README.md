@@ -50,9 +50,9 @@ tax = amount.calculate_tax(Decimal("0.10"), policy)
 品管テストは、次のいずれかを満たす場合に必要と判定されます。
 
 - 見積金額が`quality_test.minimum_amount`以上
-- 値引率が`quality_test.minimum_discount`以上
+- 値引率が`quality_test.minimum_discount`を超える
 
-初期設定は、見積金額1,000,000円、または値引率20%以上です。
+初期設定は、見積金額1,000,000円以上、または値引率20%超です。
 
 ```toml
 [quality_test]
@@ -65,10 +65,20 @@ minimum_discount = 20
 ```python
 from estimate_management.common import Discount, Money, requires_quality_test
 
-requires_quality_test(Money.yen(999_999), discount=Discount.discount(19))  # False
-requires_quality_test(Money.yen(999_999), discount=Discount.discount(20))  # True
-requires_quality_test(Money.yen(1_000_000), discount=Discount.discount(0))  # True
+result = requires_quality_test(
+    Money.yen(999_999),
+    discount=Discount.discount(21),
+)
+
+assert result.required is True
+assert result.warnings == ()
 ```
+
+判定結果は`QualityCheckResult`で返されます。`required`は品管テストの要否、
+`warnings`はログなどへ出力すべき警告のタプルです。値引率が未設定の場合は、
+金額条件だけで判定し、その旨を`warnings`へ格納するとともに警告ログを出力します。
+`minimum_amount`が未設定の場合は品管テスト不要と判定し、`warnings`への格納と
+警告ログの出力を行います。
 
 複数の見積りをまとめて判定する場合は、`load_estimate_rules()`で設定を一度だけ
 読み込み、`requires_quality_test()`の第2引数へ渡せます。
@@ -83,7 +93,7 @@ requires_quality_test(
     Money.yen(800_000),
     rules,
     discount=Discount.discount(10),
-)
+).required
 ```
 
 ## 値引額計算
@@ -111,6 +121,7 @@ assert discount_amount == Money.yen(200)
 │       ├── estimate_number.py
 │       ├── estimate_rules.py
 │       ├── money.py
+│       ├── quality_check_result.py
 │       └── rounding.py
 ├── tests/common/
 └── pyproject.toml
