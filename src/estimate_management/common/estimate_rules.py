@@ -74,6 +74,7 @@ def requires_quality_test(
     rules: EstimateRules | None = None,
     *,
     discount: Discount | None,
+    important_customer: bool | None = None,
     config_path: str | Path = DEFAULT_RULES_PATH,
 ) -> QualityCheckResult:
     """見積金額または値引率による品管テスト判定結果を返します。
@@ -94,20 +95,21 @@ def requires_quality_test(
     amount_requires_quality_test = (
         estimate_amount.amount >= active_rules.quality_test_minimum_amount.amount
     )
+    requires_test = bool(important_customer) or amount_requires_quality_test
 
     if discount is None:
         warning = (
             "値引率が未設定です。金額条件による判定結果を採用します: "
             f"estimate_amount={estimate_amount.amount}, "
-            f"requires_quality_test={amount_requires_quality_test}"
+            f"requires_quality_test={requires_test}"
         )
         logger.warning("%s", warning)
         return QualityCheckResult(
-            required=amount_requires_quality_test,
+            required=requires_test,
             warnings=(warning,),
         )
 
-    if amount_requires_quality_test:
+    if requires_test:
         return QualityCheckResult(required=True)
 
     return QualityCheckResult(
