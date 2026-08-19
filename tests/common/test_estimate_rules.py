@@ -14,25 +14,38 @@ from estimate_management.common import (
 
 
 @pytest.mark.parametrize(
-    ("amount", "discount_rate", "expected"),
+    ("amount", "discount_rate", "important_customer", "expected"),
     [
-        pytest.param(999_999, 19, False, id="TC-01-both-below-threshold"),
-        pytest.param(999_999, 20, False, id="TC-02-discount-not-above-threshold"),
-        pytest.param(999_999, 21, True, id="TC-03-discount-above-threshold"),
-        pytest.param(999_999, None, False, id="TC-04-discount-unset"),
-        pytest.param(1_000_000, 19, True, id="TC-05-amount-at-threshold"),
-        pytest.param(1_000_000, 20, True, id="TC-06-amount-at-discount-not-above"),
-        pytest.param(1_000_000, 21, True, id="TC-07-discount-above-at-amount"),
-        pytest.param(1_000_000, None, True, id="TC-08-discount-unset-at-amount"),
-        pytest.param(1_000_001, 19, True, id="TC-09-amount-above-threshold"),
-        pytest.param(1_000_001, 20, True, id="TC-10-amount-above-discount-not-above"),
-        pytest.param(1_000_001, 21, True, id="TC-11-both-above-threshold"),
-        pytest.param(1_000_001, None, True, id="TC-12-discount-unset-above-amount"),
+        pytest.param(999_999, 19, True, True, id="TC-01-important-both-below"),
+        pytest.param(999_999, 20, True, True, id="TC-02-important-discount-at-threshold"),
+        pytest.param(999_999, 21, True, True, id="TC-03-important-discount-above"),
+        pytest.param(999_999, None, True, True, id="TC-04-important-discount-unset"),
+        pytest.param(1_000_000, 19, True, True, id="TC-05-important-amount-at-threshold"),
+        pytest.param(1_000_000, 20, True, True, id="TC-06-important-both-at-threshold"),
+        pytest.param(1_000_000, 21, True, True, id="TC-07-important-discount-above-at-amount"),
+        pytest.param(1_000_000, None, True, True, id="TC-08-important-unset-at-amount"),
+        pytest.param(1_000_001, 19, True, True, id="TC-09-important-amount-above"),
+        pytest.param(1_000_001, 20, True, True, id="TC-10-important-amount-above-discount-at"),
+        pytest.param(1_000_001, 21, True, True, id="TC-11-important-both-above"),
+        pytest.param(1_000_001, None, True, True, id="TC-12-important-unset-above-amount"),
+        pytest.param(999_999, 19, False, False, id="TC-13-regular-both-below"),
+        pytest.param(999_999, 20, False, False, id="TC-14-regular-discount-at-threshold"),
+        pytest.param(999_999, 21, False, True, id="TC-15-regular-discount-above"),
+        pytest.param(999_999, None, False, False, id="TC-16-regular-discount-unset"),
+        pytest.param(1_000_000, 19, False, True, id="TC-17-regular-amount-at-threshold"),
+        pytest.param(1_000_000, 20, False, True, id="TC-18-regular-both-at-threshold"),
+        pytest.param(1_000_000, 21, False, True, id="TC-19-regular-discount-above-at-amount"),
+        pytest.param(1_000_000, None, False, True, id="TC-20-regular-unset-at-amount"),
+        pytest.param(1_000_001, 19, False, True, id="TC-21-regular-amount-above"),
+        pytest.param(1_000_001, 20, False, True, id="TC-22-regular-amount-above-discount-at"),
+        pytest.param(1_000_001, 21, False, True, id="TC-23-regular-both-above"),
+        pytest.param(1_000_001, None, False, True, id="TC-24-regular-unset-above-amount"),
     ],
 )
 def test_judges_quality_test_from_amount_and_discount(
     amount: int,
     discount_rate: int | None,
+    important_customer: bool,
     expected: bool,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
@@ -42,6 +55,7 @@ def test_judges_quality_test_from_amount_and_discount(
         result = requires_quality_test(
             Money.yen(amount),
             discount=discount,
+            important_customer=important_customer,
         )
 
     assert isinstance(result, QualityCheckResult)
