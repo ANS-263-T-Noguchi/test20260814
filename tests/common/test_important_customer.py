@@ -8,25 +8,39 @@ REGULAR_CUSTOMER_CODE = "00000000000000000002"
 
 
 @pytest.mark.parametrize(
-    "customer_code",
-    [pytest.param(IMPORTANT_CUSTOMER_CODE, id="TC-25-accepts-20-digit-customer-code")],
+    ("customer_code", "expected"),
+    [
+        pytest.param(
+            IMPORTANT_CUSTOMER_CODE,
+            IMPORTANT_CUSTOMER_CODE,
+            id="TC-25-20文字の顧客コードを受理",
+        ),
+        pytest.param(
+            "ABC12345678901234567",
+            "ABC12345678901234567",
+            id="TC-26-英数字の顧客コードを受理",
+        ),
+        pytest.param(
+            12_345_678_901_234_567_890,
+            "12345678901234567890",
+            id="TC-29-文字列以外の顧客コードを文字列として受理",
+        ),
+    ],
 )
-def test_accepts_20_digit_customer_code(customer_code: str) -> None:
+def test_accepts_20_character_customer_code(customer_code: object, expected: str) -> None:
     code = common.CustomerCode(customer_code)
 
-    assert code.value == customer_code
+    assert code.value == expected
 
 
 @pytest.mark.parametrize(
     "customer_code",
     [
-        pytest.param("0" * 19, id="TC-26-rejects-19-digit-customer-code"),
-        pytest.param("0" * 21, id="TC-27-rejects-21-digit-customer-code"),
-        pytest.param("0" * 19 + "A", id="TC-28-rejects-non-digit-customer-code"),
-        pytest.param(12_345_678_901_234_567_890, id="TC-29-rejects-non-string-customer-code"),
+        pytest.param("0" * 19, id="TC-27-19文字の顧客コードを拒否"),
+        pytest.param("0" * 21, id="TC-28-21文字の顧客コードを拒否"),
     ],
 )
-def test_rejects_customer_code_other_than_20_digit_string(customer_code: object) -> None:
+def test_rejects_customer_code_other_than_20_character_string(customer_code: object) -> None:
     with pytest.raises((TypeError, ValueError)):
         common.CustomerCode(customer_code)
 
@@ -34,8 +48,8 @@ def test_rejects_customer_code_other_than_20_digit_string(customer_code: object)
 @pytest.mark.parametrize(
     ("customer_code", "expected"),
     [
-        pytest.param(IMPORTANT_CUSTOMER_CODE, True, id="TC-30-identifies-important-customer"),
-        pytest.param(REGULAR_CUSTOMER_CODE, False, id="TC-31-identifies-regular-customer"),
+        pytest.param(IMPORTANT_CUSTOMER_CODE, True, id="TC-30-重要顧客を判定"),
+        pytest.param(REGULAR_CUSTOMER_CODE, False, id="TC-31-通常顧客を判定"),
     ],
 )
 def test_identifies_important_customer(customer_code: str, expected: bool) -> None:
@@ -46,7 +60,7 @@ def test_identifies_important_customer(customer_code: str, expected: bool) -> No
 
 @pytest.mark.parametrize(
     "expected",
-    [pytest.param(False, id="TC-32-treats-unset-important-customer-as-regular")],
+    [pytest.param(False, id="TC-32-重要顧客フラグ未設定を通常顧客として処理")],
 )
 def test_treats_unset_important_customer_flag_as_regular(expected: bool) -> None:
     result = requires_quality_test(

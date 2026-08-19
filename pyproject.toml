@@ -21,6 +21,7 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 addopts = "-ra"
+disable_test_id_escaping_and_forfeit_all_rights_to_community_support = true
 pythonpath = ["src"]
 render_collapsed = ""
 testpaths = ["tests"]
